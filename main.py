@@ -32,6 +32,9 @@ class mainWindow(QMainWindow):
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
+        # Tools Menu
+        tools_menu = menu_bar.addMenu("Tools")
+
         # Components Menu
         component_menu = menu_bar.addMenu("Components")
         calculator_action = QAction("Calculator", self)
@@ -42,6 +45,9 @@ class mainWindow(QMainWindow):
         text_editor_action = QAction("Text Editor",self)
         text_editor_action.triggered.connect(self.openTextEditorWindow)
         component_menu.addAction(text_editor_action)
+
+        # Models Menu
+        models_menu = menu_bar.addMenu("Models")
 
     def openCalculatorWindow(self):
         """Open the Calculator as a subwindow."""
