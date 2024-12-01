@@ -2,11 +2,17 @@ from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton, QLineEdit, QGridL
 from PyQt6.QtCore import Qt
 import math
 
-
 class CalculatorWindow(QWidget):
+    # Class variable to store the last state
+    _last_state = ""
+
     def __init__(self):
         super().__init__()
         self.initializeUI()
+        
+        # Restore the last state if it exists
+        if self._last_state:
+            self.display.setText(self._last_state)
 
     def initializeUI(self):
         """Set up the calculator UI."""
@@ -53,19 +59,27 @@ class CalculatorWindow(QWidget):
                 # Safely evaluate the input
                 result = self.safeEval(current_text)
                 self.display.setText(str(result))
+                # Save the result as the last state
+                CalculatorWindow._last_state = str(result)
             except Exception:
                 self.display.setText("Error")
+                CalculatorWindow._last_state = "Error"
         elif button_text == 'CE':
             self.display.clear()  # Clear everything
+            CalculatorWindow._last_state = ""
         elif button_text == 'DEL':
-            self.display.setText(current_text[:-1])  # Delete the last character
+            new_text = current_text[:-1]
+            self.display.setText(new_text)
+            CalculatorWindow._last_state = new_text
         elif button_text == '√':
             try:
                 # Compute square root
                 result = math.sqrt(float(current_text))
                 self.display.setText(str(result))
+                CalculatorWindow._last_state = str(result)
             except Exception:
                 self.display.setText("Error")
+                CalculatorWindow._last_state = "Error"
         elif button_text in ['sin', 'cos', 'tan']:
             try:
                 angle = math.radians(float(current_text))  # Convert degrees to radians
@@ -76,10 +90,14 @@ class CalculatorWindow(QWidget):
                 elif button_text == 'tan':
                     result = math.tan(angle)
                 self.display.setText(str(result))
+                CalculatorWindow._last_state = str(result)
             except Exception:
                 self.display.setText("Error")
+                CalculatorWindow._last_state = "Error"
         else:
-            self.display.setText(current_text + button_text)
+            new_text = current_text + button_text
+            self.display.setText(new_text)
+            CalculatorWindow._last_state = new_text
 
     def safeEval(self, expression):
         """Safely evaluate mathematical expressions."""
