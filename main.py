@@ -9,7 +9,7 @@ from core.mdi_manager import MDIManager
 from components.calculator import CalculatorWindow
 from tests.text_editor import TextEditorWindow
 from tools.serial_dialog import SerialPortDialog
-from models.temperature_lab import TemperatureLab
+from models.arduino_test import ArduinoTest
 from PyQt6.QtCore import Qt
 
 
@@ -49,6 +49,7 @@ class MainWindow(QMainWindow):
         serial_action = QAction("Serial Connection", self)
         serial_action.triggered.connect(self.open_serial_dialog)
         tools_menu.addAction(serial_action)
+        tools_menu.addAction("Arduino Test", self.open_arduino_test)
 
         # Components Menu
         component_menu = menu_bar.addMenu("Components")
@@ -63,9 +64,7 @@ class MainWindow(QMainWindow):
 
         # Models Menu
         models_menu = menu_bar.addMenu("Models")
-        temp_lab_action = QAction("Temperature Lab", self)
-        temp_lab_action.triggered.connect(self.open_temperature_lab)
-        models_menu.addAction(temp_lab_action)
+        # Empty menu - ready for future model additions
 
         # Create and add toolbar before MDI area setup
         self.create_quick_access_toolbar()
@@ -92,6 +91,10 @@ class MainWindow(QMainWindow):
         subwindow = self.mdi_manager.openSubWindow("Serial Port Connection", serial_window)
         if hasattr(subwindow, 'setWindowTitle'):
             subwindow.setWindowTitle("Serial Port Connection")
+
+    def open_arduino_test(self):
+        test = ArduinoTest()
+        self.add_mdi_window(test, "Arduino Connection Test")
 
     def initializeUI(self):
         self.setGeometry(400, 200, 1200, 800)
