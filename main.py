@@ -11,6 +11,7 @@ from tests.text_editor import TextEditorWindow
 from tools.serial_dialog import SerialPortDialog
 from models.arduino_test import ArduinoTest
 from PyQt6.QtCore import Qt
+from components.arduino_ide_emulator import ArduinoIDEEmulator
 
 
 class MainWindow(QMainWindow):
@@ -57,10 +58,10 @@ class MainWindow(QMainWindow):
         calculator_action.triggered.connect(self.open_calculator)
         component_menu.addAction(calculator_action)
 
-        # Components -> Text Editor
-        text_editor_action = QAction("Text Editor",self)
-        text_editor_action.triggered.connect(self.openTextEditorWindow)
-        component_menu.addAction(text_editor_action)
+        # Replace Text Editor with Arduino IDE Emulator
+        arduino_ide_action = QAction("Arduino IDE Emulator", self)
+        arduino_ide_action.triggered.connect(self.openArduinoIDEEmulator)
+        component_menu.addAction(arduino_ide_action)
 
         # Models Menu
         models_menu = menu_bar.addMenu("Models")
@@ -81,9 +82,10 @@ class MainWindow(QMainWindow):
         temp_lab = TemperatureLab()
         self.add_mdi_window(temp_lab, "Temperature Lab")
 
-    def openTextEditorWindow(self):
-        text_editor_widget = TextEditorWindow()
-        self.mdi_manager.openSubWindow("Text Editor",text_editor_widget)
+    def openArduinoIDEEmulator(self):
+        """Open Arduino IDE Emulator window"""
+        arduino_ide = ArduinoIDEEmulator()
+        self.add_mdi_window(arduino_ide, "Arduino IDE Emulator")
 
     def open_serial_dialog(self):
         """Open the serial port selection dialog in the MDI area"""
