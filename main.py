@@ -22,18 +22,18 @@ class MainWindow(QMainWindow):
         # Load the stylesheet
         self.loadStylesheet()
 
-        #MDI Area Management
-        #link the manager to the main window using self.mdi_manager
+        # MDI Area Management
         self.mdi = QMdiArea()
         self.mdi.setActivationOrder(QMdiArea.WindowOrder.CreationOrder)
         self.mdi.setViewMode(QMdiArea.ViewMode.SubWindowView)
+        self.mdi.setBackground(Qt.GlobalColor.lightGray)
         
         # Store window positions
         self.window_positions = {}
 
         self.setCentralWidget(self.mdi)
 
-        #initialize MDI Manager
+        # Initialize MDI Manager
         self.mdi_manager = MDIManager(self.mdi)
 
         #menu bar
@@ -65,7 +65,36 @@ class MainWindow(QMainWindow):
 
         # Models Menu
         models_menu = menu_bar.addMenu("Models")
-        # Empty menu - ready for future model additions
+        
+        # Sinusoid Wave Explorer
+        sinusoid_action = QAction("🌊 Sinusoid Wave Explorer", self)
+        sinusoid_action.triggered.connect(self.open_sinusoid_simulator)
+        models_menu.addAction(sinusoid_action)
+
+        # Electrical Calculator
+        electrical_calc_action = QAction("⚡ Electrical Engineering Calculator", self)
+        electrical_calc_action.triggered.connect(self.open_electrical_calculator)
+        models_menu.addAction(electrical_calc_action)
+
+        # Digital Logic Simulator
+        digital_logic_action = QAction("🔧 Digital Logic Simulator", self)
+        digital_logic_action.triggered.connect(self.open_digital_logic_simulator)
+        models_menu.addAction(digital_logic_action)
+
+        # Derivative Explorer
+        derivative_action = QAction("📈 Derivative Explorer", self)
+        derivative_action.triggered.connect(self.open_derivative_visualizer)
+        models_menu.addAction(derivative_action)
+
+        # Integral Explorer
+        integral_action = QAction("📊 Integral Explorer", self)
+        integral_action.triggered.connect(self.open_integral_visualizer)
+        models_menu.addAction(integral_action)
+
+        # Curve Fitting Explorer
+        curve_fit_action = QAction("📉 Curve Fitting Explorer", self)
+        curve_fit_action.triggered.connect(self.open_curve_fitting)
+        models_menu.addAction(curve_fit_action)
 
         # Create and add toolbar before MDI area setup
         self.create_quick_access_toolbar()
@@ -97,6 +126,42 @@ class MainWindow(QMainWindow):
     def open_arduino_test(self):
         test = ArduinoTest()
         self.add_mdi_window(test, "Arduino Connection Test")
+
+    def open_electrical_calculator(self):
+        """Open Electrical Engineering Calculator window"""
+        from models.electrical_calculator import ElectricalCalculator
+        calculator = ElectricalCalculator()
+        self.add_mdi_window(calculator, "Electrical Engineering Calculator")
+
+    def open_digital_logic_simulator(self):
+        """Open Digital Logic Simulator window"""
+        from models.digital_logic_simulator import DigitalLogicSimulator
+        simulator = DigitalLogicSimulator()
+        self.add_mdi_window(simulator, "Digital Logic Simulator")
+
+    def open_sinusoid_simulator(self):
+        """Open Sinusoid Wave Simulator window"""
+        from models.sinusoid_simulator import SinusoidSimulator
+        simulator = SinusoidSimulator()
+        self.add_mdi_window(simulator, "Sinusoid Wave Explorer")
+
+    def open_derivative_visualizer(self):
+        """Open Derivative Visualizer window"""
+        from models.derivative_visualizer import DerivativeVisualizer
+        visualizer = DerivativeVisualizer()
+        self.add_mdi_window(visualizer, "Derivative Explorer")
+
+    def open_integral_visualizer(self):
+        """Open Integral Visualizer window"""
+        from models.integral_visualizer import IntegralVisualizer
+        visualizer = IntegralVisualizer()
+        self.add_mdi_window(visualizer, "Integral Explorer")
+
+    def open_curve_fitting(self):
+        """Open Curve Fitting Explorer window"""
+        from models.curve_fitting import CurveFitting
+        fitting = CurveFitting()
+        self.add_mdi_window(fitting, "Curve Fitting Explorer")
 
     def initializeUI(self):
         self.setGeometry(400, 200, 1200, 800)
