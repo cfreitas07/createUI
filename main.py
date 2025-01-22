@@ -41,25 +41,28 @@ class MainWindow(QMainWindow):
 
         # File Menu
         file_menu = menu_bar.addMenu("File")
-        exit_action = QAction("Exit", self)
+        exit_action = QAction("🚪 Exit", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
         # Tools Menu
         tools_menu = menu_bar.addMenu("Tools")
-        serial_action = QAction("Serial Connection", self)
+        serial_action = QAction("🔌 Serial Connection", self)
         serial_action.triggered.connect(self.open_serial_dialog)
         tools_menu.addAction(serial_action)
-        tools_menu.addAction("Arduino Test", self.open_arduino_test)
+        
+        arduino_test_action = QAction("🔧 Arduino Test", self)
+        arduino_test_action.triggered.connect(self.open_arduino_test)
+        tools_menu.addAction(arduino_test_action)
 
         # Components Menu
         component_menu = menu_bar.addMenu("Components")
-        calculator_action = QAction("Calculator", self)
+        calculator_action = QAction("🧮 Calculator", self)
         calculator_action.triggered.connect(self.open_calculator)
         component_menu.addAction(calculator_action)
 
-        # Replace Text Editor with Arduino IDE Emulator
-        arduino_ide_action = QAction("Arduino IDE Emulator", self)
+        # Arduino IDE Emulator
+        arduino_ide_action = QAction("💻 Arduino IDE Emulator", self)
         arduino_ide_action.triggered.connect(self.openArduinoIDEEmulator)
         component_menu.addAction(arduino_ide_action)
 
@@ -95,6 +98,11 @@ class MainWindow(QMainWindow):
         curve_fit_action = QAction("📉 Curve Fitting Explorer", self)
         curve_fit_action.triggered.connect(self.open_curve_fitting)
         models_menu.addAction(curve_fit_action)
+
+        # Complex Numbers Explorer
+        complex_action = QAction("🔄 Complex Numbers Explorer", self)
+        complex_action.triggered.connect(self.open_complex_numbers)
+        models_menu.addAction(complex_action)
 
         # Create and add toolbar before MDI area setup
         self.create_quick_access_toolbar()
@@ -162,6 +170,12 @@ class MainWindow(QMainWindow):
         from models.curve_fitting import CurveFitting
         fitting = CurveFitting()
         self.add_mdi_window(fitting, "Curve Fitting Explorer")
+
+    def open_complex_numbers(self):
+        """Open Complex Numbers Explorer window"""
+        from models.complex_numbers import ComplexNumberVisualizer
+        visualizer = ComplexNumberVisualizer()
+        self.add_mdi_window(visualizer, "Complex Numbers Explorer")
 
     def initializeUI(self):
         self.setGeometry(400, 200, 1200, 800)
