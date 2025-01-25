@@ -1,282 +1,337 @@
-from PyQt6.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
-                            QLabel, QPushButton, QLineEdit, QFrame, QTextEdit,
-                            QTabWidget, QGridLayout)
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QIcon
+from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QComboBox, 
+                            QPushButton, QLabel, QGridLayout,
+                            QHBoxLayout, QFrame, QTableWidget,
+                            QTableWidgetItem, QSizePolicy)
+from PyQt6.QtCore import Qt, QPropertyAnimation, QRect, QEasingCurve, QTimer, QSize
+from PyQt6.QtGui import QColor, QFont
+import os
 
-class DigitalLogicSimulator(QMainWindow):
-    def __init__(self):
-        super().__init__()
-        self.setWindowTitle("Digital Logic Explorer 🎮")
-        self.setGeometry(100, 100, 900, 700)
+class DigitalLogicSimulator(QWidget):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setup_ui()
+        self.resize(600, 400)
 
-        # Create main widget and layout
-        main_widget = QWidget()
-        self.setCentralWidget(main_widget)
-        layout = QVBoxLayout(main_widget)
-
-        # Create tab widget with fun icons
-        tabs = QTabWidget()
-        tabs.setStyleSheet("""
-            QTabWidget {
-                background-color: white;
-            }
-            QTabBar::tab {
-                background-color: #f0f0f0;
-                color: black;
-                padding: 10px 20px;
-                margin: 2px;
-                border-radius: 8px;
-                font-size: 14px;
-            }
-            QTabBar::tab:selected {
-                background-color: #4CAF50;
-                color: white;
-            }
-        """)
-
-        # Add fun tabs with emojis
-        tabs.addTab(self.create_playground_tab(), "🎮 Logic Playground")
-        tabs.addTab(self.create_simplifier_tab(), "✨ Expression Wizard")
-        tabs.addTab(self.create_learn_tab(), "📚 Quick Guide")
+    def setup_ui(self):
+        main_layout = QVBoxLayout(self)
+        main_layout.setSpacing(10)
+        main_layout.setContentsMargins(10, 10, 10, 10)
         
-        layout.addWidget(tabs)
-
-    def create_playground_tab(self):
-        frame = QFrame()
-        frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 10px;
-                padding: 20px;
-            }
-            QLabel {
-                color: black;
-                font-size: 14px;
-            }
-            QLineEdit {
-                padding: 10px;
-                border: 2px solid #4CAF50;
-                border-radius: 8px;
-                font-size: 16px;
-                color: black;
-                background-color: white;
-            }
-            QPushButton {
-                padding: 10px 20px;
-                background-color: #4CAF50;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                font-size: 14px;
-            }
-            QPushButton:hover {
-                background-color: #45a049;
-            }
-            QTextEdit {
-                border: 1px solid #ddd;
-                border-radius: 8px;
-                padding: 10px;
-                font-size: 14px;
-                color: black;
-                background-color: white;
-            }
-        """)
-        
-        layout = QVBoxLayout(frame)
-
-        # Fun title with emoji
-        title = QLabel("🎮 Logic Playground")
-        title.setFont(QFont("Arial", 20, QFont.Weight.Bold))
+        # Title
+        title = QLabel("Digital Logic Simulator")
+        title.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title)
+        main_layout.addWidget(title)
 
-        # Expression input with fun buttons
-        input_layout = QHBoxLayout()
-        self.expr_input = QLineEdit()
-        self.expr_input.setPlaceholderText("Type your expression here (e.g., A·B + C')")
-        input_layout.addWidget(self.expr_input)
+        # Content layout
+        content_layout = QHBoxLayout()
         
-        # Quick input buttons
-        for symbol, text in [("·", "AND"), ("+", "OR"), ("'", "NOT"), ("⊕", "XOR")]:
-            btn = QPushButton(f"{symbol} {text}")
-            btn.clicked.connect(lambda x, s=symbol: self.expr_input.insert(s))
-            btn.setMaximumWidth(100)
-            input_layout.addWidget(btn)
+        # Left side controls
+        left_container = QFrame()
+        left_container.setMaximumWidth(240)
+        controls_layout = QVBoxLayout(left_container)
         
-        layout.addLayout(input_layout)
-
-        # Results display with fun sections
-        self.results = QTextEdit()
-        self.results.setReadOnly(True)
-        layout.addWidget(self.results)
-
-        # Action buttons
-        button_layout = QHBoxLayout()
-        analyze_btn = QPushButton("🔍 Analyze")
-        analyze_btn.clicked.connect(self.analyze_expression)
-        simplify_btn = QPushButton("✨ Simplify")
-        simplify_btn.clicked.connect(self.simplify_expression)
-        truth_table_btn = QPushButton("📊 Truth Table")
-        truth_table_btn.clicked.connect(self.generate_truth_table)
+        # Input switches frame
+        input_frame = QFrame()
+        input_frame.setStyleSheet("background-color: #f5f6fa; border-radius: 8px; padding: 8px;")
+        input_layout = QVBoxLayout(input_frame)
         
-        for btn in [analyze_btn, simplify_btn, truth_table_btn]:
-            button_layout.addWidget(btn)
+        switch_label = QLabel("Input Switches:")
+        switch_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
+        input_layout.addWidget(switch_label)
         
-        layout.addLayout(button_layout)
-
-        return frame
-
-    def create_simplifier_tab(self):
-        frame = QFrame()
-        frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 10px;
-                padding: 20px;
-            }
-        """)
+        switches_layout = QHBoxLayout()
+        self.switches = []
         
-        layout = QGridLayout(frame)
-
-        # Fun title
-        title = QLabel("✨ Expression Wizard")
-        title.setFont(QFont("Arial", 20, QFont.Weight.Bold))
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(title, 0, 0, 1, 2)
-
-        # Interactive simplification steps
-        self.steps_display = QTextEdit()
-        self.steps_display.setReadOnly(True)
-        layout.addWidget(self.steps_display, 1, 0, 1, 2)
-
-        return frame
-
-    def create_learn_tab(self):
-        frame = QFrame()
-        frame.setStyleSheet("""
-            QFrame {
-                background-color: white;
-                border-radius: 10px;
-                padding: 20px;
-            }
-        """)
-        
-        layout = QVBoxLayout(frame)
-
-        guide = QTextEdit()
-        guide.setReadOnly(True)
-        guide.setHtml("""
-            <h2>🎮 Welcome to Digital Logic Explorer!</h2>
+        for name in ['A', 'B']:
+            switch_container = QVBoxLayout()
             
-            <h3>🎯 Quick Start:</h3>
-            <ol>
-                <li>Go to Logic Playground</li>
-                <li>Type your expression using:</li>
-                <ul>
-                    <li>· for AND</li>
-                    <li>+ for OR</li>
-                    <li>' for NOT</li>
-                    <li>⊕ for XOR</li>
-                </ul>
-                <li>Click the fun buttons to analyze!</li>
-            </ol>
+            label = QLabel(name)
+            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            label.setStyleSheet("font-size: 16px; font-weight: bold; color: #2c3e50;")
+            switch_container.addWidget(label)
+            
+            switch = QPushButton()
+            switch.setCheckable(True)
+            switch.setFixedSize(40, 40)
+            switch.clicked.connect(lambda checked, s=switch: self.handle_switch_click(s))
+            switch.setStyleSheet("""
+                QPushButton {
+                    background-color: #e74c3c;
+                    border-radius: 20px;
+                    border: 2px solid #c0392b;
+                }
+                QPushButton:checked {
+                    background-color: #2ecc71;
+                    border: 2px solid #27ae60;
+                }
+                QPushButton:hover {
+                    background-color: #ff6b6b;
+                }
+                QPushButton:checked:hover {
+                    background-color: #5ef198;
+                }
+            """)
+            
+            self.switches.append(switch)
+            switch_container.addWidget(switch)
+            switches_layout.addLayout(switch_container)
+        
+        input_layout.addLayout(switches_layout)
+        controls_layout.addWidget(input_frame)
 
-            <h3>✨ Cool Features:</h3>
-            <ul>
-                <li>Real-time analysis</li>
-                <li>Instant simplification</li>
-                <li>Truth table generation</li>
-                <li>Step-by-step explanations</li>
-            </ul>
-
-            <h3>💡 Pro Tips:</h3>
-            <ul>
-                <li>Use parentheses for grouping</li>
-                <li>Try simple expressions first</li>
-                <li>Experiment with different operators</li>
-                <li>Watch the simplification magic!</li>
-            </ul>
+        # Gate selector
+        gate_frame = QFrame()
+        gate_frame.setStyleSheet("background-color: #f5f6fa; border-radius: 8px; padding: 8px;")
+        gate_layout = QVBoxLayout(gate_frame)
+        
+        gate_label = QLabel("Select Logic Gate:")
+        gate_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
+        gate_layout.addWidget(gate_label)
+        
+        self.gate_selector = QComboBox()
+        self.gate_selector.addItems(["AND", "OR", "NAND", "NOR", "XOR"])
+        self.gate_selector.setStyleSheet("""
+            QComboBox {
+                background-color: white;
+                border: 2px solid #3498db;
+                border-radius: 4px;
+                padding: 5px;
+            }
+            QComboBox::drop-down {
+                border: none;
+            }
+            QComboBox::down-arrow {
+                image: none;
+                border-left: 2px solid #3498db;
+                border-bottom: 2px solid #3498db;
+                width: 8px;
+                height: 8px;
+                transform: rotate(-45deg);
+                margin-right: 8px;
+            }
         """)
-        layout.addWidget(guide)
-
-        return frame
-
-    def analyze_expression(self):
-        expr = self.expr_input.text()
-        if not expr:
-            return
-
-        analysis = []
-        analysis.append("<h3>🔍 Expression Analysis</h3>")
+        self.gate_selector.currentTextChanged.connect(self.handle_gate_change)
+        gate_layout.addWidget(self.gate_selector)
         
-        # Variables used
-        vars = sorted(set(c for c in expr if c.isalpha()))
-        analysis.append(f"<p>📌 Variables: {', '.join(vars)}</p>")
+        controls_layout.addWidget(gate_frame)
+
+        # Output display
+        output_frame = QFrame()
+        output_frame.setStyleSheet("background-color: #f5f6fa; border-radius: 8px; padding: 8px;")
+        output_layout = QVBoxLayout(output_frame)
         
-        # Operators count
-        ops = {
-            '·': 'AND',
-            '+': 'OR',
-            "'": 'NOT',
-            '⊕': 'XOR'
+        output_label = QLabel("Output:")
+        output_label.setStyleSheet("font-size: 14px; font-weight: bold; color: #2c3e50;")
+        output_layout.addWidget(output_label)
+        
+        self.output_display = QPushButton()
+        self.output_display.setEnabled(False)
+        self.output_display.setFixedSize(65, 65)
+        self.output_display.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                border-radius: 32px;
+                border: 3px solid #c0392b;
+            }
+            QPushButton:checked {
+                background-color: #2ecc71;
+                border: 3px solid #27ae60;
+            }
+        """)
+        output_layout.addWidget(self.output_display, alignment=Qt.AlignmentFlag.AlignCenter)
+        
+        controls_layout.addWidget(output_frame)
+        content_layout.addWidget(left_container)
+
+        # Truth table frame (60% of width)
+        truth_frame = QFrame()
+        truth_frame.setStyleSheet("""
+            QFrame {
+                background-color: #f5f6fa;
+                border-radius: 8px;
+                padding: 8px;
+            }
+            QTableWidget {
+                background-color: white;
+                border: none;
+            }
+            QHeaderView::section {
+                background-color: #34495e;
+                color: white;
+                padding: 4px;
+                border: none;
+                font-size: 12px;
+                font-weight: bold;
+            }
+        """)
+        
+        truth_layout = QVBoxLayout(truth_frame)
+        truth_layout.setSpacing(5)
+        
+        truth_label = QLabel("Truth Table:")
+        truth_label.setStyleSheet("font-size: 12px; font-weight: bold; color: #2c3e50;")
+        truth_layout.addWidget(truth_label)
+        
+        self.truth_table = QTableWidget()
+        self.truth_table.setColumnCount(3)
+        self.truth_table.setRowCount(4)
+        self.truth_table.setHorizontalHeaderLabels(['A', 'B', 'Output'])
+        self.truth_table.verticalHeader().setVisible(False)
+        
+        # Harmonized column widths
+        for i in range(3):
+            self.truth_table.setColumnWidth(i, 50)
+        # Harmonized row heights
+        for i in range(4):
+            self.truth_table.setRowHeight(i, 25)
+        
+        truth_layout.addWidget(self.truth_table)
+
+        # Add equation label
+        self.equation_label = QLabel()
+        self.equation_label.setStyleSheet("""
+            QLabel {
+                font-size: 14px;
+                font-weight: bold;
+                color: #2c3e50;
+                padding: 8px;
+                background-color: white;
+                border-radius: 4px;
+            }
+        """)
+        self.equation_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        truth_layout.addWidget(self.equation_label)
+        
+        content_layout.addWidget(truth_frame)
+        
+        main_layout.addLayout(content_layout)
+        self.update_simulation()
+
+    def handle_switch_click(self, switch):
+        """Handle switch click with bounce animation"""
+        anim = QPropertyAnimation(switch, b"geometry")
+        anim.setDuration(100)
+        anim.setEasingCurve(QEasingCurve.Type.OutBounce)
+        
+        start_rect = switch.geometry()
+        anim.setKeyValueAt(0, start_rect)
+        anim.setKeyValueAt(0.3, QRect(start_rect.x(), start_rect.y() - 5, 
+                                     start_rect.width(), start_rect.height()))
+        anim.setKeyValueAt(1, start_rect)
+        
+        # Update simulation immediately after state change
+        self.update_simulation()
+        anim.start()
+
+    def update_simulation(self):
+        """Update all simulation components"""
+        # Get current state
+        inputs = [switch.isChecked() for switch in self.switches]
+        gate = self.gate_selector.currentText()
+        
+        # Calculate output
+        output = self.evaluate_gate(inputs, gate)
+        
+        # Update output display with animation
+        anim = QPropertyAnimation(self.output_display, b"geometry")
+        anim.setDuration(100)
+        anim.setEasingCurve(QEasingCurve.Type.OutBounce)
+        
+        start_rect = self.output_display.geometry()
+        anim.setKeyValueAt(0, start_rect)
+        anim.setKeyValueAt(0.3, QRect(start_rect.x(), start_rect.y() - 5, 
+                                     start_rect.width(), start_rect.height()))
+        anim.setKeyValueAt(1, start_rect)
+        
+        # Set the output state
+        if output:
+            self.output_display.setStyleSheet("""
+                QPushButton {
+                    background-color: #2ecc71;
+                    border-radius: 32px;
+                    border: 3px solid #27ae60;
+                }
+            """)
+        else:
+            self.output_display.setStyleSheet("""
+                QPushButton {
+                    background-color: #e74c3c;
+                    border-radius: 32px;
+                    border: 3px solid #c0392b;
+                }
+            """)
+        
+        # Update truth table
+        self.update_truth_table()
+        
+        # Start animation
+        anim.start()
+
+    def evaluate_gate(self, inputs, gate_type):
+        """Evaluate the logic gate output for 2 inputs"""
+        a, b = inputs[0], inputs[1]
+        
+        if gate_type == "AND":
+            return a and b
+        elif gate_type == "OR":
+            return a or b
+        elif gate_type == "NAND":
+            return not (a and b)
+        elif gate_type == "NOR":
+            return not (a or b)
+        elif gate_type == "XOR":
+            return a != b
+        return False
+
+    def update_truth_table(self):
+        """Update the truth table based on current gate"""
+        gate = self.gate_selector.currentText()
+        current_inputs = [switch.isChecked() for switch in self.switches]
+        
+        for row in range(4):
+            a = bool(row & 2)
+            b = bool(row & 1)
+            
+            # Create items
+            a_item = QTableWidgetItem('1' if a else '0')
+            b_item = QTableWidgetItem('1' if b else '0')
+            
+            # Calculate output
+            output = self.evaluate_gate([a, b], gate)
+            output_item = QTableWidgetItem('1' if output else '0')
+            
+            # Style all items
+            for item in [a_item, b_item, output_item]:
+                item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+                item.setFont(QFont("Arial", 14, QFont.Weight.Bold))
+                item.setBackground(Qt.GlobalColor.white)
+            
+            # Highlight current input combination
+            if a == current_inputs[0] and b == current_inputs[1]:
+                a_item.setBackground(Qt.GlobalColor.yellow)
+                b_item.setBackground(Qt.GlobalColor.yellow)
+                output_item.setBackground(QColor("#e8e8e8"))
+            
+            self.truth_table.setItem(row, 0, a_item)
+            self.truth_table.setItem(row, 1, b_item)
+            self.truth_table.setItem(row, 2, output_item)
+        
+        self.equation_label.setText(f"Output = {gate}(A, B)")
+
+    def handle_gate_change(self):
+        """Handle gate selection change"""
+        self.update_simulation()
+        self.update_equation()
+
+    def update_equation(self):
+        """Update the equation based on selected gate"""
+        gate = self.gate_selector.currentText()
+        equations = {
+            "AND": "Output = A • B",
+            "OR": "Output = A + B",
+            "NAND": "Output = (A • B)'",
+            "NOR": "Output = (A + B)'",
+            "XOR": "Output = A ⊕ B"
         }
-        op_count = {op: expr.count(sym) for sym, op in ops.items()}
-        op_text = [f"{op}: {count}" for op, count in op_count.items() if count > 0]
-        analysis.append(f"<p>🔧 Operators: {', '.join(op_text)}</p>")
-
-        # Quick patterns
-        patterns = []
-        if "A·A" in expr: patterns.append("X·X = X")
-        if "A+A" in expr: patterns.append("X+X = X")
-        if "A·A'" in expr: patterns.append("X·X' = 0")
-        if patterns:
-            analysis.append("<p>💡 Spotted patterns:</p>")
-            analysis.append("<ul>" + "".join(f"<li>{p}</li>" for p in patterns) + "</ul>")
-
-        self.results.setHtml("".join(analysis))
-
-    def simplify_expression(self):
-        expr = self.expr_input.text()
-        if not expr:
-            return
-
-        steps = []
-        steps.append("<h3>✨ Simplification Steps</h3>")
-        steps.append("<ol>")
-        
-        # Example simplification steps
-        if "A·A" in expr:
-            steps.append("<li>Using idempotent law: A·A = A</li>")
-        if "A·1" in expr:
-            steps.append("<li>Using identity law: A·1 = A</li>")
-        if "A+0" in expr:
-            steps.append("<li>Using null law: A+0 = A</li>")
-        
-        steps.append("</ol>")
-        self.results.setHtml("".join(steps))
-
-    def generate_truth_table(self):
-        expr = self.expr_input.text()
-        if not expr:
-            return
-
-        vars = sorted(set(c for c in expr if c.isalpha()))
-        if len(vars) > 4:
-            self.results.setHtml("<p>⚠️ Truth table limited to 4 variables</p>")
-            return
-
-        table = ["<h3>📊 Truth Table</h3>"]
-        table.append("<table border='1' style='border-collapse: collapse'>")
-        
-        # Header
-        table.append("<tr>")
-        for var in vars:
-            table.append(f"<th style='padding: 5px'>{var}</th>")
-        table.append("<th style='padding: 5px'>Output</th></tr>")
-        
-        # Rows (simplified example)
-        table.append("<tr><td>0</td><td>0</td><td>0</td></tr>")
-        table.append("</table>")
-        
-        self.results.setHtml("".join(table)) 
+        self.equation_label.setText(equations[gate]) 
