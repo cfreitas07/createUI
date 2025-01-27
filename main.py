@@ -12,6 +12,7 @@ from tools.serial_dialog import SerialPortDialog
 from models.arduino_test import ArduinoTest
 from PyQt6.QtCore import Qt
 from components.arduino_ide_emulator import ArduinoIDEEmulator
+from components.inquisitive_ai_bot import InquisitiveAIChatbot
 
 
 class MainWindow(QMainWindow):
@@ -65,6 +66,11 @@ class MainWindow(QMainWindow):
         arduino_ide_action = QAction("💻 Arduino IDE Emulator", self)
         arduino_ide_action.triggered.connect(self.openArduinoIDEEmulator)
         component_menu.addAction(arduino_ide_action)
+
+        # Add Inquisitive AI Chatbot action
+        chatbot_action = QAction("🤖 Inquisitive AI Chatbot", self)
+        chatbot_action.triggered.connect(self.open_ai_chatbot)
+        component_menu.addAction(chatbot_action)
 
         # Models Menu
         models_menu = menu_bar.addMenu("Models")
@@ -176,6 +182,11 @@ class MainWindow(QMainWindow):
         from models.complex_numbers import ComplexNumberVisualizer
         visualizer = ComplexNumberVisualizer()
         self.add_mdi_window(visualizer, "Complex Numbers Explorer")
+
+    def open_ai_chatbot(self):
+        """Open Inquisitive AI Chatbot window"""
+        chatbot = InquisitiveAIChatbot()
+        self.add_mdi_window(chatbot, "Inquisitive AI Chatbot")
 
     def initializeUI(self):
         self.setGeometry(400, 200, 1200, 800)
